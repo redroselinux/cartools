@@ -1,0 +1,19 @@
+-- The new replacement of fuel will be carbuild, a part of cartools.
+-- This is our example prototype CarBuild file to check when we make carbuild.
+
+Name = "example"
+Version = 0.1
+CompilingWeight = 0
+
+BuildDeps = git gcc cartools
+
+define download
+  @git clone https://github.com/redroselinux/example ./example {gitstdflags}
+  !working_dir: ./example
+end
+
+define build
+  @gcc main.c -o ./example {ccstdldflags}
+  -- !package is a wrapper of the 'stage' and 'unstage' cartools commands.
+  !package(single-bin, "./example")
+end
