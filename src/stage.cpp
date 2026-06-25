@@ -14,32 +14,51 @@
  *   string package_name - name of the package used as the name
  *                         of the staging directory. */
 class StageDir {
-  private:
-    const std::string path;
-  public:
+  protected:
+    std::string path;
+
     /* Tiny helper to create the staging dir and return its path.
      * Arguments:
      *   string package_name - the package name used as the dir
-     *                         to stage the package in. */
-    static std::string create_path(std::string package_name) {
-      std::filesystem::path cwd = std::filesystem::current_path();
-      std::filesystem::path wdir = cwd / package_name;
-
+     *                         to stage the package in.
+     *   string extra        - dir(s) to create after the staging. */
+    static std::string create_path(std::string package_name, std::string extra) {
+      auto wdir = std::filesystem::current_path() / package_name;
       try {
-        std::filesystem::create_directory(wdir);
+        std::filesystem::create_directories(wdir);
+        if (!extra.empty()) {
+          std::filesystem::create_directories(wdir / extra);
+        }
       } catch (const std::filesystem::filesystem_error& e) {
         std::cerr << "Failed to create staging dir:"
           << std::endl << e.what() << std::endl;
       }
-      return wdir;
+      return wdir.string();
     }
 
-    StageDir(std::string package_name)
-    : path(create_path(package_name)) {}
+  public:
+    StageDir(std::string package_name, std::string extra = "")
+    : path(create_path(package_name, extra)) {}
 
     /* A function to get the staging directory path. */
     std::string get_path() {
       return path;
+    }
+};
+
+/* Ncurses-style prefix type stage dir.*/
+class NcursesStyleStageDir : public StageDir {
+  public:
+    NcursesStyleStageDir(std::string package_name)
+      : StageDir(package_name, "") {
+      auto wdir = std::filesystem::current_path() / package_name / "usr";
+      try {
+        std::filesystem::create_directories(wdir);
+        path = wdir.string();
+      } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Failed to create staging dir:"
+          << std::endl << e.what() << std::endl;
+      }
     }
 };
 
@@ -78,7 +97,17 @@ class BuildSystemInstall {
 
 CREATE_BUILDSYSTEM_CLASS(MakeInstall, "make install DESTDIR=");
 // In ncurses, 'DESTDIR' is swapped with 'prefix'
-CREATE_BUILDSYSTEM_CLASS(MakeNcursesStyleInstall, "make install prefix=");
+class MakeNcursesStyleInstall : public BuildSystemInstall {
+  protected:
+    NcursesStyleStageDir stage_dir;
+  public:
+    MakeNcursesStyleInstall(std::string package_name)
+      : BuildSystemInstall(package_name), stage_dir(package_name) {}
+    int execute() {
+      std::string path = stage_dir.get_path();
+      return std::system((std::string("make install prefix=") + path + " TICDIR=" + path + "/share/terminfo").c_str());
+    }
+};
 CREATE_BUILDSYSTEM_CLASS(CMakeInstall, "cmake --install . --prefix=")
 CREATE_BUILDSYSTEM_CLASS(MesonInstall, "meson install --destdir=");
 CREATE_BUILDSYSTEM_CLASS(CargoInstall, "cargo install --root=");
