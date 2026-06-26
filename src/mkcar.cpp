@@ -129,11 +129,13 @@ int main(int argc, char* argv[]) {
 
   // add deps
   for (std::string package : deps) {
+    if (package == ".") continue;
     metadata += "dep " + package + "\n";
   }
 
   // add exec's
   for (std::string cmd : exec) {
+    if (cmd == ".") continue;
     metadata += "exec " + cmd + "\n";
   }
 
