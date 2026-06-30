@@ -56,17 +56,18 @@ int main(int argc, char* argv[]) {
       std::cin >> output;
     } if (deps.empty()) {
       std::string input;
-      while (input != ".") {
+      while (true) {
         std::cout << "[. to end] deps: ";
         std::cin >> input;
-        if (input == "") { break; } // skip
+        if (input == "" || input == ".") break;
+        deps.push_back(input);
       }
     } if (exec.empty()) {
       std::string input;
-      while (input != ".") {
+      while (true) {
         std::cout << "[. to end] postinst cmds: ";
         std::cin >> input;
-        if (input == "") { break; } // skip
+        if (input == "" || input == ".") break;
         exec.push_back(input);
       }
     }
@@ -96,7 +97,8 @@ int main(int argc, char* argv[]) {
   if (anonymous) {
     metadata += "  Anonymous <drop-all@redroselinux.org>\n";
   } else {
-    std::string home = std::string(getenv("HOME"));
+    const char* home_env = getenv("HOME");
+    std::string home = home_env ? home_env : "";
     std::ifstream file(home + "/.config/redrose-linux-maintainer");
     if (!file.is_open()) {
       std::cerr << "failed to open maintainer file; running" <<

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <ostream>
+#include <cstdlib>
 
 /* The cartools-maintainer command sets up the email and name for a package maintainer. */
 
@@ -19,7 +20,9 @@ int main() {
   std::cout << "writing to ~/.config/redrose-linux-maintainer" << std::endl;
 
   try {
-    std::string home = std::string(getenv("HOME"));
+    const char* home_env = getenv("HOME");
+    std::string home = home_env ? home_env : "";
+    std::filesystem::create_directories(home + "/.config");
     std::ofstream file(home + "/.config/redrose-linux-maintainer");
     file << formatted;
     file.close();

@@ -128,8 +128,10 @@ int main(int argc, char* argv[]) {
 
     if (argc > 3) {
       for (int i = 3; i < argc; i++) {
-        if (strcmp(argv[i], "-C")) {
-          std::filesystem::current_path(argv[i++]);
+        if (strcmp(argv[i], "-C") == 0) {
+          if (i + 1 < argc) {
+            std::filesystem::current_path(argv[++i]);
+          }
         }
       }
     }
